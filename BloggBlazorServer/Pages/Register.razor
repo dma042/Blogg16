@@ -1,0 +1,121 @@
+﻿@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
+@inject UserStateService UserStateService
+
+
+@page "/register"
+@using System.Net.Http.Json
+@using System.ComponentModel.DataAnnotations
+@using BloggBlazorServer.Services
+
+<h3>Register</h3>
+
+<EditForm Model="@userRegistrationModel" OnValidSubmit="@RegisterUser">
+    <DataAnnotationsValidator />
+    
+    <div class="form-group">
+        <label for="username">Username</label>
+        <InputText id="username" class="form-control" @bind-Value="userRegistrationModel.UserName" />
+        <ValidationMessage For="@(() => userRegistrationModel.UserName)" />
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="userRegistrationModel.Email" />
+        <ValidationMessage For="@(() => userRegistrationModel.Email)" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <InputText id="password" class="form-control" @bind-Value="userRegistrationModel.Password" type="password"
+                   title="Passordet må være minst 6 tegn, inneholde minst ett ikke-alfanumerisk tegn, ett siffer, og én stor bokstav."/>
+        <ValidationMessage For="@(() => userRegistrationModel.Password)" />
+    </div>
+
+    <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <InputText id="confirmPassword" class="form-control" @bind-Value="userRegistrationModel.ConfirmPassword" type="password" />
+        <ValidationMessage For="@(() => userRegistrationModel.ConfirmPassword)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+</EditForm>
+
+@if (registrationResult != null)
+{
+    <div class="alert @registrationResultCssClass">@registrationResult</div>
+}
+
+@code {
+    private UserRegistrationModel userRegistrationModel = new UserRegistrationModel();
+    private string? registrationResult;
+    private string registrationResultCssClass;
+
+    private async Task RegisterUser()
+    {
+        var response = await httpClient.PostAsJsonAsync("api/auth/register", userRegistrationModel);
+        if (response.IsSuccessStatusCode)
+        {
+            await LoginUser();
+        }
+        else
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+            registrationResult = $"Registration failed: {responseContent}";
+            registrationResultCssClass = "alert-danger";
+        }
+    }
+
+    private async Task LoginUser()
+    {
+        var loginModel = new UserLoginModel
+        {
+            Email = userRegistrationModel.Email,
+            Password = userRegistrationModel.Password
+        };
+
+        var response = await httpClient.PostAsJsonAsync("api/auth/login", loginModel);
+        if (response.IsSuccessStatusCode)
+        {
+            var loginResponse = await response.Content.ReadFromJsonAsync<Login.LoginResponse>();
+            if (loginResponse != null)
+            {
+                UserStateService.Login(loginResponse.UserId, loginResponse.UserName, userRegistrationModel.Email);
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        else
+        {
+            registrationResult = "Login failed after registration.";
+            registrationResultCssClass = "alert-danger";
+        }
+    }
+
+    public class UserLoginModel
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+
+
+
+    public class UserRegistrationModel
+    {
+
+        [Required(ErrorMessage = "Brukernavn påkrevd")]
+        [StringLength(15, ErrorMessage = "Brukernavnet kan være maks 15 bokstaver")]
+        public string UserName { get; set; }
+
+        [Required(ErrorMessage = "Email påkrevd")]
+        [EmailAddress(ErrorMessage = "Ugyldig email-addresse")]
+        public string Email { get; set; }
+
+        
+        [Required(ErrorMessage = "Passord påkrevd")]
+        [StringLength(100, ErrorMessage = "Passordet må være minst 6 tegn, inneholde minst ett ikke-alfanumerisk tegn, ett siffer, og én stor bokstav", MinimumLength = 6)]
+        public string Password { get; set; }
+
+        [Compare("Password", ErrorMessage = "Passordene matcher ikke")]
+        public string ConfirmPassword { get; set; }
+    }
+}

@@ -1,0 +1,69 @@
+﻿@page "/search"
+@using System.Web
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using BloggBlazorServer.Services
+@inject SearchService SearchService
+
+
+
+
+
+<h3>Søkeresultater</h3>
+
+@if (searchResults != null)
+{
+    <div>
+        <h4>Poster</h4>
+        @foreach (var post in searchResults.Poster)
+        {
+            <p>@post.Tittel</p>
+        }
+
+        <h4>Blogger</h4>
+        @foreach (var blogg in searchResults.Blogger)
+        {
+            <p>@blogg.Tittel</p>
+        }
+
+        <h4>Kommentarer</h4>
+        @foreach (var kommentar in searchResults.Kommentarer)
+        {
+            <p>@kommentar.Innhold</p>
+        }
+        
+        <h4>Brukere</h4>
+        @foreach (var user in searchResults.Users)
+        {
+            <p>@user.UserName</p>
+        }
+    </div>
+}
+else
+{
+    <p>Ingen resultater funnet.</p>
+}
+
+@code {
+    private SearchResult searchResults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateSearchResults();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await UpdateSearchResults();
+    }
+
+    private async Task UpdateSearchResults()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = HttpUtility.ParseQueryString(uri.Query).Get("query");
+        if (!string.IsNullOrEmpty(query))
+        {
+            searchResults = await SearchService.SearchAsync(query);
+        }
+    }
+}

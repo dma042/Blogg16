@@ -1,0 +1,34 @@
+﻿@page "/user-list"
+@inject HttpClient httpClient
+
+<h3>Brukerliste</h3>
+
+@if (users != null)
+{
+    <ul>
+        @foreach (var user in users)
+        {
+            <li>@user.UserName (@user.Email)</li>
+        }
+    </ul>
+}
+else
+{
+    <p>Laster brukerdata...</p>
+}
+
+@code {
+    private List<UserModel> users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await httpClient.GetFromJsonAsync<List<UserModel>>("api/auth/users");
+    }
+
+    public class UserModel
+    {
+        public string Id { get; set; }
+        public string UserName { get; set; }
+        public string Email { get; set; }
+    }
+}

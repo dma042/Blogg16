@@ -1,0 +1,45 @@
+﻿@page "/blogg/{BloggId:int}"
+@using BloggBlazorServer.Models
+@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
+
+<h3>@blogg?.Tittel</h3>
+<p>@blogg?.Beskrivelse</p>
+
+@if (innlegg == null)
+{
+    <p>Laster inn innlegg...</p>
+}
+else if (innlegg.Count == 0)
+{
+    <p>Ingen innlegg funnet for denne bloggen.</p>
+}
+else
+{
+    @foreach (var post in innlegg)
+    {
+        <div class="post-entry" @onclick="() => GåTilPost(post.PostId)">
+            <h5>@post.Tittel</h5>
+            <p>@post.Innhold</p>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public int BloggId { get; set; }
+
+    private Blogg blogg;
+    private List<Post> innlegg;
+
+    private void GåTilPost(int postId)
+    {
+        NavigationManager.NavigateTo($"/post/{postId}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        blogg = await httpClient.GetFromJsonAsync<Blogg>($"api/Blogg/{BloggId}");
+        innlegg = await httpClient.GetFromJsonAsync<List<Post>>($"api/Blogg/{BloggId}/innlegg");
+    }
+}

@@ -1,0 +1,25 @@
+﻿@page "/logout"
+@using BloggBlazorServer.Services
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+
+<h3>Logout</h3>
+
+@if (UserStateService.IsLoggedIn)
+{
+    <p>Er du sikker på at du vil logge ut?</p>
+    <button class="btn btn-primary" @onclick="LogoutUser">Logg ut</button>
+}
+else
+{
+    <p>Du er allerede logget ut.</p>
+    <a href="/">Gå tilbake til startsiden</a>
+}
+
+@code {
+    private void LogoutUser()
+    {
+        UserStateService.Logout();
+        NavigationManager.NavigateTo("/");
+    }
+}

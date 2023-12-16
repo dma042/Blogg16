@@ -1,0 +1,40 @@
+﻿@page "/utforsk-blogger"
+@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
+@using BloggBlazorServer.Models
+
+<h3>Utforsk Blogger</h3>
+
+@if (blogger == null)
+{
+    <p>Laster blogger...</p>
+}
+else
+{
+    foreach (var blogg in blogger)
+    {
+        <div class="blogg-entry" @onclick="() => GåTilBlogg(blogg.BloggId)">
+            <h4>@blogg.Tittel</h4>
+            <p>@blogg.Beskrivelse</p>
+            <button @onclick="() => Abonner(blogg.BloggId)">Abonner</button>
+        </div>
+    }
+}
+
+@code {
+    private List<Blogg> blogger;
+
+    protected override async Task OnInitializedAsync()
+    {
+        blogger = await httpClient.GetFromJsonAsync<List<Blogg>>("api/blogg");
+    }
+
+    private void GåTilBlogg(int bloggId)
+    {
+        NavigationManager.NavigateTo($"/blogg/{bloggId}");
+    }
+
+    private async Task Abonner(int bloggId)
+    {
+    }
+}

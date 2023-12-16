@@ -1,0 +1,112 @@
+﻿@page "/post/{PostId:int}"
+@using BloggBlazorServer.Models
+@using BloggBlazorServer.Services
+@inject HttpClient httpClient
+@inject UserStateService UserStateService
+
+
+@if (post != null)
+{
+    <h3>@post?.Tittel</h3>
+    <div class="post-content-box">
+        <p>@post?.Innhold</p>
+    </div>
+}
+else
+{
+    <p>Innlegg ikke funnet.</p>
+}
+<div class="comment-box">
+    <EditForm Model="@newComment" OnValidSubmit="@LeggTilKommentar">
+        <textarea @bind="newComment.Innhold" placeholder="Skriv en kommentar..."></textarea>
+        <button type="submit" class="btn btn-primary">Publiser Kommentar</button>
+    </EditForm>
+    @if (!string.IsNullOrEmpty(submissionMessage))
+    {
+        <p class="@submissionMessageClass">@submissionMessage</p>
+    }
+</div>
+
+
+
+@if (kommentarer != null)
+{
+    foreach (var kommentar in kommentarer)
+    {
+        <div class="comment-entry">
+            <p><strong>@kommentar.ForfatterNavn:</strong> @kommentar.Innhold (@kommentar.Opprettet.ToString("yyyy-MM-dd HH:mm"))</p>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public int PostId { get; set; }
+
+    private Post post;
+    private Kommentar newComment = new Kommentar();
+    private List<Kommentar> kommentarer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        post = await httpClient.GetFromJsonAsync<Post>($"api/post/{PostId}");
+        kommentarer = await httpClient.GetFromJsonAsync<List<Kommentar>>($"api/kommentar/post/{PostId}");
+        foreach (var kommentar in kommentarer)
+        {
+            try
+            {
+                var forfatter = await httpClient.GetFromJsonAsync<UserList.UserModel>("api/auth/user/" + kommentar.ForfatterId);
+                kommentar.ForfatterNavn = forfatter?.UserName;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"Feil ved henting av brukerdata for {kommentar.ForfatterId}: {ex.Message}");
+                kommentar.ForfatterNavn = "Ukjent bruker";
+            }
+        }
+
+    }
+
+    private string submissionMessage = "";
+    private string submissionMessageClass = "";
+
+    private async Task LeggTilKommentar()
+    {
+        try
+        {
+            newComment.PostId = PostId;
+            newComment.ForfatterId = UserStateService.CurrentUserId;
+
+            var response = await httpClient.PostAsJsonAsync("api/kommentar", newComment);
+            if (response.IsSuccessStatusCode)
+            {
+                var lagtTilKommentar = await response.Content.ReadFromJsonAsync<Kommentar>();
+                kommentarer.Add(lagtTilKommentar);
+                newComment = new Kommentar();
+                submissionMessage = "Kommentaren ble publisert.";
+                submissionMessageClass = "text-success";
+            }
+            else
+            {
+                var errorResponse = await response.Content.ReadAsStringAsync();
+                submissionMessage = $"Det oppstod en feil under publisering av kommentaren: {errorResponse}";
+                submissionMessageClass = "text-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            submissionMessage = $"Unntak ved publisering av kommentar: {ex.Message}";
+            submissionMessageClass = "text-danger";
+        }
+    }
+
+
+    public class Kommentar
+    {
+        public string Innhold { get; set; }
+        public int PostId { get; set; }
+        public string ForfatterId { get; set; }
+        public string ForfatterNavn { get; set; }
+        public DateTime Opprettet { get; set; }
+    }
+}

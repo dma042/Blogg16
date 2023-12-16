@@ -1,0 +1,232 @@
+﻿@page "/min-blogg"
+@using BloggBlazorServer.Services
+@using Newtonsoft.Json
+@inject HttpClient httpClient
+@inject UserStateService UserStateService
+<style>
+    .post-container {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+    }
+
+    .edit-form-container {
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+</style>
+
+<h3>Min Blogg</h3>
+
+@if (isLoading)
+{
+    <p>Laster blogginnhold...</p>
+}
+else if (UserStateService.IsLoggedIn)
+{
+    <p>Velkommen til din blogg, @currentUser?.UserName!</p>
+    <p>Din bruker-ID er: @UserStateService.CurrentUserId</p>
+
+    @if (blog != null)
+    {
+        <a href="configure-blog">Endre Blogg</a>
+        <p>Tittel: @blog.Tittel</p>
+        <p>Beskrivelse: @blog.Beskrivelse</p>
+
+        <EditForm Model="@newPost" OnValidSubmit="HandleSubmit" class="edit-form-container">
+            <div class="form-group">
+                <label for="title">Tittel på innlegg</label>
+                <InputText id="title" @bind-Value="newPost.Tittel" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="content">Innhold i innlegget</label>
+                <InputTextArea id="content" @bind-Value="newPost.Innhold" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="tags">Tags (comma-separated)</label>
+                <InputText id="tags" @bind-Value="newPost.Tags" class="form-control" />
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Publiser Innlegg</button>
+            </div>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(submissionMessage))
+        {
+            <p class="@submissionMessageClass">@submissionMessage</p>
+        }
+    }
+    else
+    {
+        <p>Du har ikke opprettet en blogg ennå.</p>
+    }
+}
+else
+{
+    <p>Du må være logget inn for å se din blogg.</p>
+}
+
+@if (blog?.Posts?.Count > 0)
+{
+    <h4>Innlegg i Bloggen</h4>
+    @foreach (var post in blog.Posts)
+    {
+        <div class="post-container">
+            <h5>@post.Tittel</h5>
+            <p>@post.Innhold</p>
+            <p>Tags: @string.Join(", ", post.Tags)</p>
+            <button @onclick="(e) => DeletePost(post.PostId)" class="btn btn-danger">Slett</button>
+        </div>
+    }
+}
+else
+{
+    <p>Ingen innlegg funnet for denne bloggen.</p>
+}
+
+
+
+@code {
+    private Blogg blog;
+    private UserModel currentUser;
+    private PostModel newPost = new PostModel();
+    private bool isLoading = true;
+    private string submissionMessage;
+    private string submissionMessageClass;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        if (UserStateService.IsLoggedIn)
+        {
+            try
+            {
+                var userId = UserStateService.CurrentUserId;
+                currentUser = await httpClient.GetFromJsonAsync<UserModel>($"api/auth/user/{userId}");
+                var response = await httpClient.GetAsync($"https://localhost:7018/api/Blogg/user/{userId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    blog = JsonConvert.DeserializeObject<Blogg>(content);
+                }
+                else
+                {
+                    Console.WriteLine("Feil ved henting av blogg: Responsen var ikke vellykket.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Feil ved henting av blogg: {ex.Message}");
+            }
+        }
+        if (blog != null)
+        {
+            try
+            {
+                var postResponse = await httpClient.GetAsync($"api/Post/blog/{blog.BloggId}");
+                if (postResponse.IsSuccessStatusCode)
+                {
+                    var postData = await postResponse.Content.ReadAsStringAsync();
+                    blog.Posts = JsonConvert.DeserializeObject<List<PostModel>>(postData);
+                }
+                else
+                {
+                    Console.WriteLine("Feil ved henting av innlegg.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Feil ved henting av innlegg: {ex.Message}");
+            }
+        }
+
+        await FetchPosts();
+        isLoading = false;
+    }
+
+    private async Task HandleSubmit()
+    {
+        var postToCreate = new
+        {
+            Tittel = newPost.Tittel,
+            Innhold = newPost.Innhold,
+            BloggId = blog.BloggId,
+        };
+
+        var response = await httpClient.PostAsJsonAsync("api/Post", postToCreate);
+
+
+        if (response.IsSuccessStatusCode)
+        {
+            submissionMessage = "Innlegget ble opprettet suksessfullt.";
+            submissionMessageClass = "text-success";
+            newPost = new PostModel();
+            await FetchPosts();
+
+        }
+        else
+        {
+            var errorResponse = await response.Content.ReadAsStringAsync();
+            submissionMessage = $"Det oppstod en feil under opprettelse av innlegget: {errorResponse}";
+            submissionMessageClass = "text-danger";
+        }
+
+    }
+    private async Task FetchPosts()
+    {
+        var postResponse = await httpClient.GetAsync($"api/Post/blog/{blog.BloggId}");
+        if (postResponse.IsSuccessStatusCode)
+        {
+            var postData = await postResponse.Content.ReadAsStringAsync();
+            blog.Posts = JsonConvert.DeserializeObject<List<PostModel>>(postData);
+        }
+
+    }
+
+    private async Task DeletePost(int postId)
+    {
+        var response = await httpClient.DeleteAsync($"api/Post/{postId}");
+        if (response.IsSuccessStatusCode)
+        {
+
+            await FetchPosts();
+        }
+        else
+        {
+        }
+    }
+
+
+
+
+    public class PostModel
+    {
+        public int PostId { get; set; }
+        public string Tittel { get; set; }
+        public string Innhold { get; set; }
+        public DateTime Opprettet { get; set; }
+        public string Tags { get; set; }
+    }
+
+
+
+    public class Blogg
+    {
+        public int BloggId { get; set; }
+        public string Tittel { get; set; }
+        public string Beskrivelse { get; set; }
+        public List<PostModel> Posts { get; set; }
+    }
+
+    public class UserModel
+    {
+        public string Id { get; set; }
+        public string UserName { get; set; }
+        public string Email { get; set; }
+    }
+}

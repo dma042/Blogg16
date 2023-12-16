@@ -1,0 +1,118 @@
+﻿@using BloggBlazorServer.Services
+@using BloggBlazorServer.Models
+@using Microsoft.AspNetCore.Identity
+@using System.Web
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+@inject SearchService SearchService
+
+
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">BloggBlazorServer</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="navbar-collapse">
+            <div class="navbar-nav ml-auto">
+                <EditForm Model="@searchModel" OnValidSubmit="@OnSearch">
+                    <div class="input-group">
+                        <InputText @bind-Value="searchModel.SearchTerm" class="form-control" placeholder="Search" />
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <span class="oi oi-home" aria-hidden="true"></span> Home
+        </NavLink>
+
+        @if (!UserStateService.IsLoggedIn)
+        {
+            <div class="nav-item">
+                <NavLink class="nav-link" href="register">
+                    <span class="oi oi-pencil" aria-hidden="true"></span> Register
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="login">
+                    <span class="oi oi-account-login" aria-hidden="true"></span> Login
+                </NavLink>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item">
+                <NavLink class="nav-link" href="min-blogg">
+                    <span class="oi oi-book" aria-hidden="true"></span> Min Blogg
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="user-List">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Users
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="logout">
+                    <span class="oi oi-account-logout" aria-hidden="true"></span> Logout
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="utforsk-blogger">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Utforsk Blogger
+                </NavLink>
+            </div>
+        }
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
+
+
+@code {
+    private SearchModel searchModel = new SearchModel();
+
+    private void OnSearch()
+    {
+        // Navigate to the redirection page with the search term
+        NavigationManager.NavigateTo($"/redirect?query={searchModel.SearchTerm}");
+    }
+
+    private class SearchModel
+    {
+        public string SearchTerm { get; set; }
+    }
+
+    private SearchResult searchResults;
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        UserStateService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        UserStateService.OnChange -= StateHasChanged;
+    }
+}
+
+
+

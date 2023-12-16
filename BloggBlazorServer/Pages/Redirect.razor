@@ -1,0 +1,12 @@
+﻿@page "/redirect"
+@using System.Web
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = HttpUtility.ParseQueryString(uri.Query).Get("query");
+        NavigationManager.NavigateTo($"/search?query={query}");
+    }
+}

@@ -1,0 +1,73 @@
+﻿@page "/login"
+@using BloggBlazorServer.Services
+@inject HttpClient httpClient
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+
+<h3>Login</h3>
+
+<EditForm Model="@userLoginModel" OnValidSubmit="@LoginUser">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="email">Email</label>
+        <InputText id="email" class="form-control" @bind-Value="userLoginModel.Email" />
+        <ValidationMessage For="@(() => userLoginModel.Email)" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <InputText id="password" class="form-control" @bind-Value="userLoginModel.Password" type="password" />
+        <ValidationMessage For="@(() => userLoginModel.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+@if (loginResult != null)
+{
+    <div class="alert @loginResultCssClass">@loginResult</div>
+}
+
+@code {
+    private UserLoginModel userLoginModel = new UserLoginModel();
+    private string? loginResult;
+    private string loginResultCssClass;
+
+    private async Task LoginUser()
+    {
+        var response = await httpClient.PostAsJsonAsync("api/auth/login", userLoginModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+            if (loginResponse != null)
+            {
+                UserStateService.Login(loginResponse.UserId, loginResponse.UserName, userLoginModel.Email);
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        else
+        {
+            loginResult = "Login failed. Please check your credentials.";
+            loginResultCssClass = "alert-danger";
+        }
+    }
+
+
+    public class LoginResponse
+    {
+        public string UserId { get; set; }
+        public string UserName { get; set; }
+        public DateTime Expiration { get; set; }
+    }
+
+
+
+    public class UserLoginModel
+    {
+        public string UserName { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+}
