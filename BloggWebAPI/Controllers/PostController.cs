@@ -77,6 +77,7 @@ namespace BloggWebAPI.Controllers
             }
         }
 
+
         // DELETE: api/Post/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePost(int id)

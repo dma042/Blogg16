@@ -16,8 +16,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Tagg> Tagger { get; set; }
     public DbSet<Abonnement> Abonnementer { get; set; }
     public DbSet<Notifikasjon> Notifikasjoner { get; set; }
-
     public DbSet<Direktemelding> Direktemeldinger { get; set; }
+    public DbSet<UploadResult> UploadResults { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +46,10 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .WithMany()
             .HasForeignKey(d => d.MottakerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UploadResult>()
+            .Property(u => u.FileName)
+            .IsRequired();
 
     }
 }

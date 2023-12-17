@@ -50,6 +50,11 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Filopplasting
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddCors();
+
+
 var app = builder.Build();
 
 // HTTP request pipeline
