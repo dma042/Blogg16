@@ -17,6 +17,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Abonnement> Abonnementer { get; set; }
     public DbSet<Notifikasjon> Notifikasjoner { get; set; }
 
+    public DbSet<Direktemelding> Direktemeldinger { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -32,6 +34,18 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .WithMany()
             .HasForeignKey(a => a.FollowingId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Direktemelding>()
+            .HasOne(d => d.Avsender)
+            .WithMany()
+            .HasForeignKey(d => d.AvsenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Direktemelding>()
+            .HasOne(d => d.Mottaker)
+            .WithMany()
+            .HasForeignKey(d => d.MottakerId)
+            .OnDelete(DeleteBehavior.Restrict);
 
     }
 }

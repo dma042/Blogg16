@@ -1,0 +1,122 @@
+﻿@page "/meldinger"
+@inject HttpClient Http
+@using BloggBlazorServer.Models
+@using BloggBlazorServer.Services
+@using Microsoft.AspNetCore.Identity
+
+<style>
+    .melding-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 10px;
+    }
+
+    .melding {
+        max-width: 60%;
+        padding: 10px;
+        border-radius: 20px;
+        color: white;
+    }
+
+    .min-melding {
+        background-color: #007bff; /* Blå for innloggede brukere */
+    }
+
+    .deres-melding {
+        background-color: #6c757d; /* Grå for motpart */
+        justify-content: flex-start;
+    }
+</style>
+
+
+
+<h3>Direktemeldinger</h3>
+
+@if (avsendere != null)
+{
+    <ul>
+        @foreach (var avsender in avsendere)
+        {
+            <li @onclick="() => VelgAvsender(avsender)">
+                @avsender.UserName
+            </li>
+        }
+    </ul>
+}
+
+@if (valgtAvsender != null)
+{
+    <h4>Meldinger mellom deg og @valgtAvsender.UserName</h4>
+    @if (meldinger != null)
+    {
+        <div>
+            @foreach (var melding in meldinger)
+            {
+                <div class="@(melding.AvsenderId == innloggetBrukerId ? "melding-container" : "melding-container deres-melding")">
+                    <div class="@(melding.AvsenderId == innloggetBrukerId ? "melding min-melding" : "melding")">
+                        @melding.Innhold
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>Ingen meldinger enda.</p>
+    }
+
+    <textarea @bind="nyMelding"></textarea>
+    <button @onclick="SendMelding">Send Melding</button>
+}
+
+@code {
+    private List<IdentityUser> avsendere;
+    private IdentityUser valgtAvsender;
+    private List<Direktemelding> meldinger;
+    private string nyMelding = "";
+    private string innloggetBrukerId;
+    private string valgtMottakerId;
+
+    [Inject]
+    public UserStateService UserStateService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        avsendere = await Http.GetFromJsonAsync<List<IdentityUser>>("api/auth/users");
+
+        innloggetBrukerId = UserStateService.CurrentUserId;
+
+        avsendere = avsendere.Where(u => u.Id != innloggetBrukerId).ToList();
+    }
+
+    private async Task VelgAvsender(IdentityUser avsender)
+    {
+        valgtAvsender = avsender;
+        meldinger = await HentMeldinger(valgtAvsender.Id);
+        valgtMottakerId = avsender.Id;
+
+    }
+
+    private async Task<List<Direktemelding>> HentMeldinger(string avsenderId)
+    {
+        return await Http.GetFromJsonAsync<List<Direktemelding>>($"api/direktemelding/meldinger/{avsenderId}");
+    }
+
+    private async Task SendMelding()
+    {
+        if (!string.IsNullOrEmpty(nyMelding))
+        {
+            var nyDirektemelding = new Direktemelding
+                {
+                    AvsenderId = valgtAvsender.Id,
+                    MottakerId = valgtMottakerId,
+                    Innhold = nyMelding,
+                    SendtTidspunkt = DateTime.Now
+                };
+
+            await Http.PostAsJsonAsync("api/direktemelding", nyDirektemelding);
+            meldinger.Add(nyDirektemelding);
+            nyMelding = "";
+        }
+    }
+}
