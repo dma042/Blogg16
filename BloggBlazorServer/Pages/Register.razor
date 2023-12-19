@@ -8,43 +8,87 @@
 @using System.ComponentModel.DataAnnotations
 @using BloggBlazorServer.Services
 
-<h3>Register</h3>
+<PageTitle>Registrer deg</PageTitle>
 
-<EditForm Model="@userRegistrationModel" OnValidSubmit="@RegisterUser">
-    <DataAnnotationsValidator />
-    
-    <div class="form-group">
-        <label for="username">Username</label>
-        <InputText id="username" class="form-control" @bind-Value="userRegistrationModel.UserName" />
-        <ValidationMessage For="@(() => userRegistrationModel.UserName)" />
-    </div>
+<style>
+ 
+    .register-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
 
-    <div class="form-group">
-        <label for="email">Email</label>
-        <InputText id="email" class="form-control" @bind-Value="userRegistrationModel.Email" />
-        <ValidationMessage For="@(() => userRegistrationModel.Email)" />
-    </div>
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-    <div class="form-group">
-        <label for="password">Password</label>
-        <InputText id="password" class="form-control" @bind-Value="userRegistrationModel.Password" type="password"
-                   title="Passordet må være minst 6 tegn, inneholde minst ett ikke-alfanumerisk tegn, ett siffer, og én stor bokstav."/>
-        <ValidationMessage For="@(() => userRegistrationModel.Password)" />
-    </div>
+    label {
+        font-weight: bold;
+    }
 
-    <div class="form-group">
-        <label for="confirmPassword">Confirm Password</label>
-        <InputText id="confirmPassword" class="form-control" @bind-Value="userRegistrationModel.ConfirmPassword" type="password" />
-        <ValidationMessage For="@(() => userRegistrationModel.ConfirmPassword)" />
-    </div>
+    .btn-primary {
+        background-color: #007bff;
+        color: #fff;
+    }
 
-    <button type="submit" class="btn btn-primary">Register</button>
-</EditForm>
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
 
-@if (registrationResult != null)
-{
-    <div class="alert @registrationResultCssClass">@registrationResult</div>
-}
+    .alert {
+        margin-top: 10px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+</style>
+
+<div class="register-container">
+    <h3>Registrer deg</h3>
+
+    <EditForm Model="@userRegistrationModel" OnValidSubmit="@RegisterUser">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="username">Brukernavn</label>
+            <InputText id="username" class="form-control" @bind-Value="userRegistrationModel.UserName" />
+            <ValidationMessage For="@(() => userRegistrationModel.UserName)" />
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <InputText id="email" class="form-control" @bind-Value="userRegistrationModel.Email" />
+            <ValidationMessage For="@(() => userRegistrationModel.Email)" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Passord</label>
+            <InputText id="password" class="form-control" @bind-Value="userRegistrationModel.Password" type="password"
+                       title="Passordet må være minst 6 tegn, inneholde minst ett ikke-alfanumerisk tegn, ett siffer, og én stor bokstav." />
+            <ValidationMessage For="@(() => userRegistrationModel.Password)" />
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword">Bekreft Passord</label>
+            <InputText id="confirmPassword" class="form-control" @bind-Value="userRegistrationModel.ConfirmPassword" type="password" />
+            <ValidationMessage For="@(() => userRegistrationModel.ConfirmPassword)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Registrer</button>
+    </EditForm>
+
+    @if (registrationResult != null)
+    {
+        <div class="alert @registrationResultCssClass">@registrationResult</div>
+    }
+</div>
 
 @code {
     private UserRegistrationModel userRegistrationModel = new UserRegistrationModel();
@@ -69,10 +113,10 @@
     private async Task LoginUser()
     {
         var loginModel = new UserLoginModel
-        {
-            Email = userRegistrationModel.Email,
-            Password = userRegistrationModel.Password
-        };
+            {
+                Email = userRegistrationModel.Email,
+                Password = userRegistrationModel.Password
+            };
 
         var response = await httpClient.PostAsJsonAsync("api/auth/login", loginModel);
         if (response.IsSuccessStatusCode)
@@ -97,11 +141,8 @@
         public string Password { get; set; }
     }
 
-
-
     public class UserRegistrationModel
     {
-
         [Required(ErrorMessage = "Brukernavn påkrevd")]
         [StringLength(15, ErrorMessage = "Brukernavnet kan være maks 15 bokstaver")]
         public string UserName { get; set; }
@@ -110,7 +151,6 @@
         [EmailAddress(ErrorMessage = "Ugyldig email-addresse")]
         public string Email { get; set; }
 
-        
         [Required(ErrorMessage = "Passord påkrevd")]
         [StringLength(100, ErrorMessage = "Passordet må være minst 6 tegn, inneholde minst ett ikke-alfanumerisk tegn, ett siffer, og én stor bokstav", MinimumLength = 6)]
         public string Password { get; set; }

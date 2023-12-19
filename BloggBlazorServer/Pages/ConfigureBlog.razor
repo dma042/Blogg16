@@ -6,33 +6,64 @@
 @inject UserStateService UserStateService
 @inject HttpClient HttpClient
 
+<style>
+    .form-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: #fff;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .alert-success {
+        margin-top: 10px;
+    }
+</style>
+
 <h3>Endre Blogg</h3>
 
-@if (blog == null)
-{
-    <p>Henter bloggdata...</p>
-}
-else
-{
-    <form>
-        <div class="form-group">
-            <label for="tittel">Tittel:</label>
-            <input type="text" class="form-control" id="tittel" @bind="blog.Tittel">
-        </div>
-        <div class="form-group">
-            <label for="beskrivelse">Beskrivelse:</label>
-            <input type="text" class="form-control" id="beskrivelse" @bind="blog.Beskrivelse">
-        </div>
-        <button type="button" class="btn btn-primary" @onclick="EndreBlogg">Lagre endringer</button>
-    </form>
-}
+<div class="form-container">
+    @if (blog == null)
+    {
+        <p>Henter bloggdata...</p>
+    }
+    else
+    {
+        <form>
+            <div class="form-group">
+                <label for="tittel">Tittel:</label>
+                <input type="text" class="form-control" id="tittel" @bind="blog.Tittel">
+            </div>
+            <div class="form-group">
+                <label for="beskrivelse">Beskrivelse:</label>
+                <input type="text" class="form-control" id="beskrivelse" @bind="blog.Beskrivelse">
+            </div>
+            <button type="button" class="btn btn-primary" @onclick="EndreBlogg">Lagre endringer</button>
+        </form>
+    }
 
-@if (!string.IsNullOrEmpty(updateMessage))
-{
-    <div class="alert alert-success mt-3">
-        @updateMessage
-    </div>
-}
+    @if (!string.IsNullOrEmpty(updateMessage))
+    {
+        <div class="alert alert-success mt-3">
+            @updateMessage
+        </div>
+    }
+</div>
 
 @code {
     private Blogg blog;
@@ -43,7 +74,6 @@ else
         var userId = UserStateService.CurrentUserId;
         blog = await HttpClient.GetFromJsonAsync<Blogg>($"api/blogg/user/{userId}");
     }
-
 
     private async Task EndreBlogg()
     {

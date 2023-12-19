@@ -30,19 +30,19 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
+                <span class="oi oi-home" aria-hidden="true"></span> Hjem
             </NavLink>
         </div>
         @if (!UserStateService.IsLoggedIn)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="register">
-                    <span class="oi oi-pencil" aria-hidden="true"></span> Register
+                    <span class="oi oi-pencil" aria-hidden="true"></span> Registrer deg
                 </NavLink>
             </div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="login">
-                    <span class="oi oi-account-login" aria-hidden="true"></span> Login
+                    <span class="oi oi-account-login" aria-hidden="true"></span> Logg inn
                 </NavLink>
             </div>
         }
@@ -56,23 +56,21 @@
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="meldinger">
-                    <span class="oi oi-envelope-closed" aria-hidden="true"></span> Meldinger
+                <NavLink class="nav-link" href="utforsk-blogger">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Utforsk Blogger
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="user-List">
-                    <span class="oi oi-list-rich" aria-hidden="true"></span> Users
+                <NavLink class="nav-link" href="chatroom">
+                    <i class="oi oi-chat" aria-hidden="true"></i> Gruppechat
                 </NavLink>
             </div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="logout">
-                    <span class="oi oi-account-logout" aria-hidden="true"></span> Logout
+                    <span class="oi oi-account-logout" aria-hidden="true"></span> Logg ut
                 </NavLink>
             </div>
-            <NavLink class="nav-link" href="utforsk-blogger">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Utforsk Blogger
-            </NavLink>
+            
 
         }
     </nav>

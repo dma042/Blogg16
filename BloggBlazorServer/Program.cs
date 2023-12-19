@@ -1,3 +1,4 @@
+using BloggBlazorServer.Hubs;
 using BloggBlazorServer.Services;
 
 
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddSignalR();
 builder.Services.AddScoped<UserStateService>();
 builder.Services.AddHttpClient<SearchService>(client =>
 {
@@ -35,6 +37,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.MapBlazorHub();
+app.MapHub<ChatHub>("/chathub");
 app.MapFallbackToPage("/_Host");
 
 app.Run();

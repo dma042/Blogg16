@@ -4,30 +4,75 @@
 @inject UserStateService UserStateService
 @inject NavigationManager NavigationManager
 
-<h3>Login</h3>
 
-<EditForm Model="@userLoginModel" OnValidSubmit="@LoginUser">
-    <DataAnnotationsValidator />
+<style>
+  
+    .login-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
 
-    <div class="form-group">
-        <label for="email">Email</label>
-        <InputText id="email" class="form-control" @bind-Value="userLoginModel.Email" />
-        <ValidationMessage For="@(() => userLoginModel.Email)" />
-    </div>
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-    <div class="form-group">
-        <label for="password">Password</label>
-        <InputText id="password" class="form-control" @bind-Value="userLoginModel.Password" type="password" />
-        <ValidationMessage For="@(() => userLoginModel.Password)" />
-    </div>
+    label {
+        font-weight: bold;
+    }
 
-    <button type="submit" class="btn btn-primary">Login</button>
-</EditForm>
+    .btn-primary {
+        background-color: #007bff;
+        color: #fff;
+    }
 
-@if (loginResult != null)
-{
-    <div class="alert @loginResultCssClass">@loginResult</div>
-}
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .alert {
+        margin-top: 10px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+</style>
+
+<PageTitle>Logg inn</PageTitle>
+
+<div class="login-container">
+    <h3>Logg inn</h3>
+
+    <EditForm Model="@userLoginModel" OnValidSubmit="@LoginUser">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <InputText id="email" class="form-control" @bind-Value="userLoginModel.Email" />
+            <ValidationMessage For="@(() => userLoginModel.Email)" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <InputText id="password" class="form-control" @bind-Value="userLoginModel.Password" type="password" />
+            <ValidationMessage For="@(() => userLoginModel.Password)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Login</button>
+    </EditForm>
+
+    @if (loginResult != null)
+    {
+        <div class="alert @loginResultCssClass">@loginResult</div>
+    }
+</div>
 
 @code {
     private UserLoginModel userLoginModel = new UserLoginModel();
@@ -49,11 +94,10 @@
         }
         else
         {
-            loginResult = "Login failed. Please check your credentials.";
+            loginResult = "Innlogging feilet, sjekk oppgitt info.";
             loginResultCssClass = "alert-danger";
         }
     }
-
 
     public class LoginResponse
     {
@@ -61,8 +105,6 @@
         public string UserName { get; set; }
         public DateTime Expiration { get; set; }
     }
-
-
 
     public class UserLoginModel
     {

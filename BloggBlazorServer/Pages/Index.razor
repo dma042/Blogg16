@@ -1,9 +1,100 @@
 ﻿@page "/"
+@using BloggBlazorServer.Models
+@inject HttpClient httpClient
+@inject NavigationManager NavigationManager
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Velkommen til BloggPlattformen</PageTitle>
 
-<h1>Hello, world!</h1>
+<style>
+    .banner {
+        background-color: #007BFF;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        font-size: 2em;
+    }
 
-Welcome to your new app.
+    .intro {
+        margin: 40px;
+        text-align: center;
+    }
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    ..featured-blogs h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .blogg-entry {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        transition: transform 0.3s, box-shadow 0.3s;
+        cursor: pointer;
+    }
+
+    .blogg-entry:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .post {
+        border: 1px solid #ddd;
+        padding: 15px;
+        width: 30%;
+    }
+
+    .footer {
+        background-color: #333;
+        color: white;
+        padding: 10px;
+        text-align: center;
+    }
+</style>
+
+<div class="banner">
+    Velkommen til BloggPlattformen
+</div>
+
+<div class="intro">
+    <p>Utforsk spennende innlegg, del dine tanker og bli en del av vårt samfunn!</p>
+</div>
+
+<div class="featured-blogs">
+    <h2>Fremhevede Blogger</h2>
+    @if (tilfeldigeBlogger == null)
+    {
+        <p>Laster blogger...</p>
+    }
+    else
+    {
+        foreach (var blogg in tilfeldigeBlogger)
+        {
+            <div class="blogg-entry" @onclick="() => GåTilBlogg(blogg.BloggId)">
+                <h4>@blogg.Tittel</h4>
+                <p>@blogg.Beskrivelse</p>
+            </div>
+        }
+    }
+</div>
+
+<div class="footer">
+    <p>&copy; 2023 BloggPlattformen. Alle rettigheter forbeholdt.</p>
+</div>
+
+    
+    
+@code {
+    private List<Blogg> tilfeldigeBlogger;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var alleBlogger = await httpClient.GetFromJsonAsync<List<Blogg>>("api/blogg");
+        tilfeldigeBlogger = alleBlogger.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
+    }
+
+    private void GåTilBlogg(int bloggId)
+    {
+        NavigationManager.NavigateTo($"/blogg/{bloggId}");
+    }
+}

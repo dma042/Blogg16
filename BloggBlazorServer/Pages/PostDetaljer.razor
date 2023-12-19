@@ -6,9 +6,95 @@
 @inject IJSRuntime JS
 
 
+<style>
+    .post-title {
+        text-align: center;
+        color: #007bff;
+        margin-bottom: 20px;
+    }
+
+    .post-content-box {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        margin-bottom: 30px;
+    }
+
+    .comment-box {
+        background-color: #f2f2f2;
+        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+    }
+
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+
+    textarea:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+
+    .btn {
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    .comment-entry {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #eee;
+        margin-bottom: 10px;
+    }
+
+    .comment-entry p {
+        margin-bottom: 5px;
+    }
+
+    .comment-author {
+        font-weight: bold;
+        margin-right: 5px;
+    }
+
+    .comment-date {
+        color: #888;
+        font-size: 0.9em;
+    }
+</style>
+
 @if (post != null)
 {
-    <h3>@post?.Tittel</h3>
+    <h3 class="post-title">@post?.Tittel</h3>
     <div class="post-content-box">
         <p>@post?.Innhold</p>
     </div>
@@ -17,6 +103,7 @@ else
 {
     <p>Innlegg ikke funnet.</p>
 }
+
 <div class="comment-box">
     <EditForm Model="@newComment" OnValidSubmit="@LeggTilKommentar">
         <textarea @bind="newComment.Innhold" placeholder="Skriv en kommentar..."></textarea>
@@ -29,13 +116,15 @@ else
 </div>
 
 
-
 @if (kommentarer != null)
 {
     foreach (var kommentar in kommentarer)
     {
         <div class="comment-entry">
-            <p><strong>@kommentar.ForfatterNavn:</strong> @kommentar.Innhold (@kommentar.Opprettet.ToString("yyyy-MM-dd HH:mm"))</p>
+            <p><span class="comment-author">@kommentar.ForfatterNavn:</span> 
+               @kommentar.Innhold 
+               <span class="comment-date">(@kommentar.Opprettet.ToString("yyyy-MM-dd HH:mm"))</span>
+            </p>
             @if (kommentar.ForfatterId == UserStateService.CurrentUserId)
             {
                 <button @onclick="() => SlettKommentar(kommentar)" class="btn btn-danger">Slett</button>

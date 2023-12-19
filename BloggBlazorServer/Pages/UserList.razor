@@ -1,14 +1,61 @@
 ﻿@page "/user-list"
 @inject HttpClient httpClient
+@inject NavigationManager NavigationManager
 
-<h3>Brukerliste</h3>
+<PageTitle>Brukerliste</PageTitle>
+<h3 class="user-list-title">Brukerliste</h3>
+
+<style>
+    .user-list-title {
+        text-align: center;
+        color: #007bff;
+        margin-bottom: 20px;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    li {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-view-blog {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 5px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-view-blog:hover {
+        background-color: #0056b3;
+    }
+</style>
 
 @if (users != null)
 {
     <ul>
         @foreach (var user in users)
         {
-            <li>@user.UserName (@user.Email)</li>
+            <li>
+                @user.UserName (@user.Email)
+                @if (user.BloggId.HasValue)
+                {
+                    <button class="btn-view-blog" @onclick="() => GåTilBlogg(user.BloggId.Value)">Vis Blogg</button>
+                }
+            </li>
         }
     </ul>
 }
@@ -25,10 +72,16 @@ else
         users = await httpClient.GetFromJsonAsync<List<UserModel>>("api/auth/users");
     }
 
+    private void GåTilBlogg(int bloggId)
+    {
+        NavigationManager.NavigateTo($"/blogg/{bloggId}");
+    }
+
     public class UserModel
     {
         public string Id { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
+        public int? BloggId { get; set; }
     }
 }

@@ -1,0 +1,140 @@
+﻿@page "/chatroom"
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.SignalR.Client
+@using BloggBlazorServer.Services
+@implements IAsyncDisposable
+
+<PageTitle>Gruppechat</PageTitle>
+<h3 class="chat-title">Gruppechat</h3>
+
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .chat-title {
+        text-align: center;
+        color: #007bff;
+        margin-bottom: 20px;
+    }
+
+    .input-group {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        flex-grow: 1;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-left: 10px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    textarea {
+        width: 100%;
+        height: 500px;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        resize: none;
+    }
+</style>
+
+<div class="chat-container">
+    @if (!IsConnected)
+    {
+        <div class="input-group">
+            <input @bind="username" class="form-control" placeholder="Skriv inn navn">
+            <button class="btn btn-primary form-control-append" @onclick="Connect">
+                Koble til
+            </button>
+        </div>
+    }
+    else
+    {
+        <textarea @ref="TextAreaRef" class="form-control" readonly>
+            @messages
+            </textarea>
+        <div class="input-group">
+            <input @bind-value="message"
+                   @bind-value:event="oninput"
+                   @onkeyup="HandleInput"
+                   class="form-control">
+            <button class="btn btn-primary form-group-append"
+                    @onclick="Send"
+                    disabled="@(!IsConnected)">
+                Send
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private HubConnection? hubConnection;
+    private string messages = string.Empty;
+    private string username = string.Empty;
+    private string message = string.Empty;
+    ElementReference TextAreaRef;
+
+    private async Task Connect()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri($"/chathub?username={username}"))
+            .Build();
+
+        hubConnection.On<string, string>("GetMessage", (user, message) =>
+        {
+            var msg = $"{(string.IsNullOrEmpty(user) ? "" : user + ": ")}{message}";
+            messages += msg + "\n";
+            JSRuntime.InvokeVoidAsync("scrollToBottom", TextAreaRef);
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task Send()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.SendAsync("AddMessageToChat", username, message);
+            message = string.Empty;
+        }
+    }
+
+    private async Task HandleInput(KeyboardEventArgs args)
+    {
+        if (args.Key.Equals("Enter"))
+        {
+            await Send();
+        }
+    }
+
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
