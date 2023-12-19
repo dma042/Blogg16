@@ -4,66 +4,146 @@
 @inject NavigationManager NavigationManager
 @using BloggBlazorServer.Services
 @inject SearchService SearchService
+@implements IDisposable
 
+<style>
+    .search-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
 
+    h3, h4 {
+        color: #333;
+        margin-bottom: 15px;
+    }
 
+    .search-results p {
+        color: #007bff;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
 
-
-<h3>Søkeresultater</h3>
-
-@if (searchResults != null)
-{
-    <div>
-        <h4>Poster</h4>
-        @foreach (var post in searchResults.Poster)
-        {
-            <p>@post.Tittel</p>
+        .search-results p:hover {
+            text-decoration: underline;
         }
 
-        <h4>Blogger</h4>
-        @foreach (var blogg in searchResults.Blogger)
-        {
-            <p>@blogg.Tittel</p>
-        }
+    .search-category {
+        margin-top: 20px;
+    }
 
-        <h4>Kommentarer</h4>
-        @foreach (var kommentar in searchResults.Kommentarer)
+    .InputText {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .search-results-container {
+        margin-top: 20px;
+    }
+
+</style>
+
+<div class="search-container">
+    <h3>Søkeresultater</h3>
+
+    <div class="search-results-container">
+        <InputText @bind-Value="searchModel.SearchTerm" @oninput="OnInputChanged" class="InputText" placeholder="Skriv inn søkeord..." />
+
+        @if (searchResults != null)
         {
-            <p>@kommentar.Innhold</p>
+            <div class="search-results">
+                <div class="search-category">
+                    <h4>Poster</h4>
+                    @foreach (var post in searchResults.Poster)
+                    {
+                        <p @onclick="() => NavigateToPost(post.PostId)">@post.Tittel</p>
+                    }
+                </div>
+
+                <div class="search-category">
+                    <h4>Blogger</h4>
+                    @foreach (var blogg in searchResults.Blogger)
+                    {
+                        <p @onclick="() => NavigateToBlog(blogg.BloggId)">@blogg.Tittel</p>
+                    }
+                </div>
+            </div>
         }
-        
-        <h4>Brukere</h4>
-        @foreach (var user in searchResults.Users)
+        else
         {
-            <p>@user.UserName</p>
+            <p>Ingen resultater funnet.</p>
         }
     </div>
-}
-else
-{
-    <p>Ingen resultater funnet.</p>
-}
+</div>
 
 @code {
-    private SearchResult searchResults;
+    private SearchModel searchModel = new SearchModel();
+    private Timer? searchDebounceTimer;
+    private SearchResult? searchResults;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await UpdateSearchResults();
+        searchModel.OnSearchTermChanged += SearchTermChanged;
     }
 
-    protected override async Task OnParametersSetAsync()
+    private void NavigateToPost(int postId)
     {
-        await UpdateSearchResults();
+        NavigationManager.NavigateTo($"/post/{postId}");
     }
 
-    private async Task UpdateSearchResults()
+    private void NavigateToBlog(int bloggId)
     {
-        var uri = new Uri(NavigationManager.Uri);
-        var query = HttpUtility.ParseQueryString(uri.Query).Get("query");
-        if (!string.IsNullOrEmpty(query))
+        NavigationManager.NavigateTo($"/blogg/{bloggId}");
+    }
+
+    private void OnInputChanged(ChangeEventArgs e)
+    {
+        searchModel.SearchTerm = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private void SearchTermChanged(string searchTerm)
+    {
+        searchDebounceTimer?.Dispose();
+        searchDebounceTimer = new Timer(DebounceSearch, searchTerm, TimeSpan.FromMilliseconds(500), Timeout.InfiniteTimeSpan);
+    }
+
+    private async void DebounceSearch(object? state)
+    {
+        var searchTerm = (string?)state;
+        if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            searchResults = await SearchService.SearchAsync(query);
+            searchResults = await SearchService.SearchAsync(searchTerm);
+            InvokeAsync(StateHasChanged);
         }
+    }
+
+    public void Dispose()
+    {
+        searchDebounceTimer?.Dispose();
+        searchModel.OnSearchTermChanged -= SearchTermChanged;
+    }
+
+
+    public class SearchModel
+    {
+        private string searchTerm = string.Empty;
+
+        public string SearchTerm
+        {
+            get => searchTerm;
+            set
+            {
+                if (searchTerm != value)
+                {
+                    searchTerm = value;
+                    OnSearchTermChanged?.Invoke(value);
+                }
+            }
+        }
+
+        public event Action<string>? OnSearchTermChanged;
     }
 }
