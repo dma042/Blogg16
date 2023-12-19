@@ -1,0 +1,61 @@
+﻿@page "/configure-blog"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using BloggBlazorServer.Models
+@using BloggBlazorServer.Services
+@inject UserStateService UserStateService
+@inject HttpClient HttpClient
+
+<h3>Endre Blogg</h3>
+
+@if (blog == null)
+{
+    <p>Henter bloggdata...</p>
+}
+else
+{
+    <form>
+        <div class="form-group">
+            <label for="tittel">Tittel:</label>
+            <input type="text" class="form-control" id="tittel" @bind="blog.Tittel">
+        </div>
+        <div class="form-group">
+            <label for="beskrivelse">Beskrivelse:</label>
+            <input type="text" class="form-control" id="beskrivelse" @bind="blog.Beskrivelse">
+        </div>
+        <button type="button" class="btn btn-primary" @onclick="EndreBlogg">Lagre endringer</button>
+    </form>
+}
+
+@if (!string.IsNullOrEmpty(updateMessage))
+{
+    <div class="alert alert-success mt-3">
+        @updateMessage
+    </div>
+}
+
+@code {
+    private Blogg blog;
+    private string updateMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = UserStateService.CurrentUserId;
+        blog = await HttpClient.GetFromJsonAsync<Blogg>($"api/blogg/user/{userId}");
+    }
+
+
+    private async Task EndreBlogg()
+    {
+        var response = await HttpClient.PutAsJsonAsync($"api/blogg/{blog.BloggId}", blog);
+
+        if (response.IsSuccessStatusCode)
+        {
+            updateMessage = "Endringene ble lagret!";
+        }
+        else
+        {
+            updateMessage = "Feil ved lagring av endringer.";
+        }
+    }
+}

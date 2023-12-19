@@ -3,6 +3,7 @@
 @using BloggBlazorServer.Services
 @inject HttpClient httpClient
 @inject UserStateService UserStateService
+@inject IJSRuntime JS
 
 
 @if (post != null)
@@ -35,9 +36,14 @@ else
     {
         <div class="comment-entry">
             <p><strong>@kommentar.ForfatterNavn:</strong> @kommentar.Innhold (@kommentar.Opprettet.ToString("yyyy-MM-dd HH:mm"))</p>
+            @if (kommentar.ForfatterId == UserStateService.CurrentUserId)
+            {
+                <button @onclick="() => SlettKommentar(kommentar)" class="btn btn-danger">Slett</button>
+            }
         </div>
     }
 }
+
 
 @code {
     [Parameter]
@@ -81,6 +87,11 @@ else
             if (response.IsSuccessStatusCode)
             {
                 var lagtTilKommentar = await response.Content.ReadFromJsonAsync<Kommentar>();
+
+                var forfatter = await httpClient.GetFromJsonAsync<UserList.UserModel>("api/auth/user/" + lagtTilKommentar.ForfatterId);
+                lagtTilKommentar.ForfatterNavn = forfatter?.UserName ?? "Ukjent bruker";
+                lagtTilKommentar.Opprettet = DateTime.Now;
+
                 kommentarer.Add(lagtTilKommentar);
                 newComment = new Kommentar();
                 submissionMessage = "Kommentaren ble publisert.";
@@ -100,9 +111,32 @@ else
         }
     }
 
+    private async Task SlettKommentar(Kommentar kommentar)
+    {
+        var bekreftelse = await JS.InvokeAsync<bool>("confirm", "Er du sikker på at du vil slette denne kommentaren?");
+        if (bekreftelse)
+        {
+            var response = await httpClient.DeleteAsync($"api/kommentar/{kommentar.KommentarId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                kommentarer.Remove(kommentar);
+            }
+            else
+            {
+                var errorResponse = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Feil ved sletting av kommentaren: {errorResponse}");
+            }
+        }
+    }
+
+
+
+
 
     public class Kommentar
     {
+        public int KommentarId { get; set; }
         public string Innhold { get; set; }
         public int PostId { get; set; }
         public string ForfatterId { get; set; }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using BloggWebAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,12 +56,23 @@ public class KommentarController : ControllerBase
         {
             return NotFound();
         }
+        var currentUserId = GetCurrentUserId();
+        if (kommentar.ForfatterId != currentUserId)
+        {
+            return Forbid();
+        }
 
         _context.Kommentarer.Remove(kommentar);
         await _context.SaveChangesAsync();
 
         return NoContent();
     }
+
+    private string GetCurrentUserId()
+    {
+       return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    }
+
 
     // GET: api/Kommentar/post/5
     [HttpGet("post/{postId}")]
@@ -72,5 +84,42 @@ public class KommentarController : ControllerBase
 
         return kommentarer;
     }
+
+    // PUT: api/Kommentar/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutKommentar(int id, Kommentar kommentar)
+    {
+        if (id != kommentar.KommentarId)
+        {
+            return BadRequest();
+        }
+        _context.Entry(kommentar).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!KommentarExists(id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
+
+    private bool KommentarExists(int id)
+    {
+        return _context.Kommentarer.Any(e => e.KommentarId == id);
+    }
+
+
+
 
 }

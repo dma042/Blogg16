@@ -3,6 +3,7 @@
 @using Newtonsoft.Json
 @using System.Net.Http.Headers
 @using BloggBlazorServer.Models
+@inject NavigationManager NavigationManager
 @inject HttpClient httpClient
 @inject UserStateService UserStateService
 @inject HttpClient Http
@@ -84,7 +85,7 @@ else
     <h4>Innlegg i Bloggen</h4>
     @foreach (var post in blog.Posts)
     {
-        <div class="post-container">
+        <div class="post-container" @onclick="() => GåTilPost(post.PostId)">
             <h5>@post.Tittel</h5>
             <p>@post.Innhold</p>
             <img src="api/image/@GetStoredFileName(post.Tittel)" alt="Image" />
@@ -196,21 +197,31 @@ else
             var postData = await postResponse.Content.ReadAsStringAsync();
             blog.Posts = JsonConvert.DeserializeObject<List<PostModel>>(postData);
         }
- 
+
     }
 
     private async Task DeletePost(int postId)
     {
-        var response = await httpClient.DeleteAsync($"api/Post/{postId}");
-        if (response.IsSuccessStatusCode)
+        bool confirmDelete = await JS.InvokeAsync<bool>("confirm", "Er du sikker på at du vil slette dette innlegget?");
+        if (confirmDelete)
         {
-   
-            await FetchPosts();
-        }
-        else
-        {
+
+            var response = await httpClient.DeleteAsync($"api/Post/{postId}");
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo($"/temporary-redirect/{NavigationManager.Uri}");
+            }
+            else
+            {
+            }
         }
     }
+
+    private void GåTilPost(int postId)
+    {
+        NavigationManager.NavigateTo($"/post/{postId}");
+    }
+
 
     
 
@@ -285,4 +296,6 @@ else
 
         return "File not found.";
     }
+
+
 }

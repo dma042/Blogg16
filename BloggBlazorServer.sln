@@ -10,7 +10,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BloggBlazorServer", "BloggB
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BloggWebAPI", "BloggWebAPI\BloggWebAPI.csproj", "{E7D96B91-18C9-40A2-A858-3426A1C70DDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BloggWebAPI_Test", "BloggWebAPI_Test\BloggWebAPI_Test.csproj", "{24C41985-F2D4-4642-8A46-BD7D04A6211E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BloggWebAPI_Test", "BloggWebAPI_Test\BloggWebAPI_Test.csproj", "{24C41985-F2D4-4642-8A46-BD7D04A6211E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E7D96B91-18C9-40A2-A858-3426A1C70DDA} = {E7D96B91-18C9-40A2-A858-3426A1C70DDA}
 	EndProjectSection

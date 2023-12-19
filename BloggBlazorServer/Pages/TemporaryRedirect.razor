@@ -1,0 +1,11 @@
+﻿@page "/temporary-redirect/{*targetUrl}"
+@inject NavigationManager NavigationManager
+
+@code {
+    [Parameter] public string TargetUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/min-blogg");
+    }
+}
