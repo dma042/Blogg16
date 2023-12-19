@@ -11,14 +11,20 @@
 }
 else
 {
-    foreach (var blogg in blogger)
-    {
-        <div class="blogg-entry" @onclick="() => GåTilBlogg(blogg.BloggId)">
-            <h4>@blogg.Tittel</h4>
-            <p>@blogg.Beskrivelse</p>
-            <button @onclick="() => Abonner(blogg.BloggId)">Abonner</button>
-        </div>
-    }
+    <div class="row">
+        @foreach (var blogg in blogger)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@blogg.Tittel</h5>
+                        <p class="card-text">@blogg.Beskrivelse</p>
+                        <button @onclick="() => Abonner(blogg.BloggId)" class="btn btn-primary">Abonner</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 }
 
 @code {
@@ -36,5 +42,6 @@ else
 
     private async Task Abonner(int bloggId)
     {
+        
     }
 }

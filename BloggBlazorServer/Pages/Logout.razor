@@ -8,7 +8,7 @@
 @if (UserStateService.IsLoggedIn)
 {
     <p>Er du sikker på at du vil logge ut?</p>
-    <button class="btn btn-primary" @onclick="LogoutUser">Logg ut</button>
+    <button class="btn btn-danger" @onclick="LogoutUser">Logg ut</button>
 }
 else
 {
